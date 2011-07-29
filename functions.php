@@ -3,21 +3,26 @@ include_once('config.php');
 
 define('FOURSQUARE_VENUE_BASE_URL', 'http://foursquare.com/venue/');
 
-function foursquare_search_venues($name, $lat, $lng) {
-  $query = http_build_query(array(
-    'query'         => $name,
-    'll'            => "$lat,$lng",
-    'client_id'     => FOURSQUARE_CLIENT_ID,
-    'client_secret' => FOURSQUARE_CLIENT_SECRET,
-    'v'             => '20110727',
-  ));
+function load_buildings($file) {
+  $buildings = array();
 
-  $url = FOURSQUARE_ENDPOINT . '?' . $query;
+  if (($fh = @fopen(BUILDING_CSV_FILE, 'r')) !== false) {
+    $row = 0;
+    while (($data = fgetcsv($fh)) !== false) {
+      $name = str_replace('\\', '', $data[0]);
 
-  $json = get_url($url);
-  $data = json_decode($json);
+      $buildings[] = array(
+        'name' => $name,
+	'lat'  => $data[1],
+	'lng'  => $data[2],
+      );
+    }
+  }
+  else {
+    throw new Exception('Error opening building CSV file (' . $file . '); does it exist?');
+  }
 
-  return $data->response->venues;
+  return $buildings;
 }
 
 function get_url($url) {
@@ -37,6 +42,23 @@ function get_url($url) {
   curl_close($ch);
 
   return $result;
+}
+
+function foursquare_search_venues($name, $lat, $lng) {
+  $query = http_build_query(array(
+    'query'         => $name,
+    'll'            => "$lat,$lng",
+    'client_id'     => FOURSQUARE_CLIENT_ID,
+    'client_secret' => FOURSQUARE_CLIENT_SECRET,
+    'v'             => '20110727',
+  ));
+
+  $url = FOURSQUARE_ENDPOINT . '?' . $query;
+
+  $json = get_url($url);
+  $data = json_decode($json);
+
+  return $data->response->venues;
 }
 
 function foursquare_venue_url($venue) {

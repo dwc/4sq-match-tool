@@ -18,21 +18,11 @@ $start = (int) isset($_GET['start']) ? $_GET['start'] : 1;
 $end = $start + $num - 1;
 
 $buildings = array();
-
-if (($fh = @fopen(BUILDING_CSV_FILE, 'r')) !== false) {
-  $row = 0;
-  while (($data = fgetcsv($fh)) !== false) {
-    $name = str_replace('\\', '', $data[0]);
-
-    $buildings[] = array(
-      'name' => $name,
-      'lat'  => $data[1],
-      'lng'  => $data[2],
-    );
-  }
+try {
+  $buildings = load_buildings(BUILDING_CSV_FILE);
 }
-else {
-  $errors[] = 'Error opening building CSV file (' . BUILDING_CSV_FILE . '); does it exist?';
+catch (Exception $e) {
+  $errors[] = $e->getMessage();
 }
 ?>
 <!doctype html>
